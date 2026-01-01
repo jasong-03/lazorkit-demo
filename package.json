@@ -4,11 +4,17 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:https": "node server.js",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
   },
   "dependencies": {
+    "@coral-xyz/anchor": "^0.31.1",
+    "@lazorkit/wallet": "^2.0.1",
+    "@solana/spl-token": "^0.4.14",
+    "@solana/web3.js": "^1.98.4",
+    "buffer": "^6.0.3",
     "next": "16.1.1",
     "react": "19.2.3",
     "react-dom": "19.2.3"

@@ -1,65 +1,192 @@
-import Image from "next/image";
+"use client";
+
+/**
+ * Main Demo Page
+ *
+ * This page demonstrates the core Lazorkit SDK features:
+ * 1. Passkey-based wallet connection (no seed phrase)
+ * 2. Gasless USDC transfers (paymaster pays gas)
+ *
+ * The page shows a connect button when disconnected,
+ * and wallet info + transfer form when connected.
+ */
+
+import { useWallet } from "@lazorkit/wallet";
+import { ConnectWallet, WalletInfo, SendUSDC } from "@/components";
 
 export default function Home() {
+  const { isConnected } = useWallet();
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
+    <main className="min-h-screen bg-gray-950">
+      {/* Header */}
+      <header className="border-b border-gray-800 bg-gray-900/50 backdrop-blur-sm sticky top-0 z-10">
+        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg" />
+            <h1 className="text-xl font-bold text-white">Lazorkit Starter</h1>
+          </div>
+          <ConnectWallet />
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <div className="max-w-4xl mx-auto px-4 py-12">
+        {/* Hero Section - Show when not connected */}
+        {!isConnected && (
+          <div className="text-center py-16">
+            <h2 className="text-4xl font-bold text-white mb-4">
+              Passkey-Powered Solana Wallet
+            </h2>
+            <p className="text-gray-400 text-lg max-w-2xl mx-auto mb-8">
+              Experience the future of crypto UX. No seed phrases, no browser
+              extensions. Just your fingerprint or face.
+            </p>
+
+            {/* Feature Cards */}
+            <div className="grid md:grid-cols-2 gap-6 mt-12">
+              <div className="bg-gray-900 rounded-xl p-6 border border-gray-800 text-left">
+                <div className="w-12 h-12 bg-purple-900/50 rounded-lg flex items-center justify-center mb-4">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-6 w-6 text-purple-400"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4"
+                    />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-semibold text-white mb-2">
+                  Passkey Authentication
+                </h3>
+                <p className="text-gray-400">
+                  Sign in with FaceID, TouchID, or Windows Hello. Your
+                  biometric stays on your device - never leaves it.
+                </p>
+              </div>
+
+              <div className="bg-gray-900 rounded-xl p-6 border border-gray-800 text-left">
+                <div className="w-12 h-12 bg-green-900/50 rounded-lg flex items-center justify-center mb-4">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-6 w-6 text-green-400"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M13 10V3L4 14h7v7l9-11h-7z"
+                    />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-semibold text-white mb-2">
+                  Gasless Transactions
+                </h3>
+                <p className="text-gray-400">
+                  No SOL needed for gas. The paymaster sponsors your
+                  transactions - you just pay a tiny USDC fee.
+                </p>
+              </div>
+            </div>
+
+            {/* CTA */}
+            <div className="mt-12">
+              <p className="text-gray-500 mb-4">
+                Click the button above to get started
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Connected State - Show wallet info and transfer form */}
+        {isConnected && (
+          <div className="space-y-6">
+            <div className="text-center mb-8">
+              <h2 className="text-2xl font-bold text-white mb-2">
+                Your Lazorkit Wallet
+              </h2>
+              <p className="text-gray-400">
+                Connected via passkey. Try sending some USDC!
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-6">
+              <WalletInfo />
+              <SendUSDC />
+            </div>
+
+            {/* Instructions */}
+            <div className="bg-gray-900 rounded-xl p-6 border border-gray-800 mt-8">
+              <h3 className="text-lg font-semibold text-white mb-4">
+                How to Test
+              </h3>
+              <ol className="list-decimal list-inside space-y-2 text-gray-400">
+                <li>
+                  Get Devnet USDC from{" "}
+                  <a
+                    href="https://faucet.circle.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-purple-400 hover:underline"
+                  >
+                    Circle USDC Faucet
+                  </a>
+                  {" "}(select Solana Devnet)
+                </li>
+                <li>Enter a recipient Solana address</li>
+                <li>Enter the amount of USDC to send</li>
+                <li>Click Send - approve with your passkey</li>
+                <li>View the transaction on Solana Explorer</li>
+              </ol>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Footer */}
+      <footer className="border-t border-gray-800 mt-auto">
+        <div className="max-w-4xl mx-auto px-4 py-6 flex flex-col md:flex-row items-center justify-between gap-4">
+          <p className="text-gray-500 text-sm">
+            Built with{" "}
             <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+              href="https://lazorkit.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-purple-400 hover:underline"
             >
-              Templates
+              Lazorkit SDK
             </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+            for the Lazorkit Bounty
           </p>
+          <div className="flex gap-4">
+            <a
+              href="https://docs.lazorkit.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-gray-400 hover:text-white text-sm"
+            >
+              Docs
+            </a>
+            <a
+              href="https://github.com/lazor-kit/lazor-kit"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-gray-400 hover:text-white text-sm"
+            >
+              GitHub
+            </a>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+      </footer>
+    </main>
   );
 }

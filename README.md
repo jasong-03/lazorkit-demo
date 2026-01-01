@@ -1,192 +1,331 @@
 # Lazorkit Payment Starter
 
-A starter template demonstrating **Lazorkit SDK** integration with passkey-based authentication and gasless USDC transfers on Solana.
+A production-ready starter template for building **passkey-authenticated Solana wallets** with **gasless USDC transfers** using the Lazorkit SDK.
 
-> No seed phrases. No browser extensions. Just biometrics.
+> No seed phrases. No browser extensions. Just your fingerprint or face.
 
-## Features
+**Live Demo:** [lazorkit-demo-drab.vercel.app](https://lazorkit-demo-drab.vercel.app)
 
-- **Passkey Authentication** - Sign in with FaceID, TouchID, or Windows Hello
-- **Smart Wallets** - PDA-based accounts controlled by your passkey
-- **Gasless Transactions** - Send USDC without holding SOL for gas
-- **Clean Code** - Well-documented, production-ready patterns
+---
 
-## Quick Start
+## Project Overview
+
+This starter demonstrates two core features of the Lazorkit SDK:
+
+### 1. Passkey-Based Wallet Authentication
+- Users authenticate with biometrics (FaceID, TouchID, Windows Hello)
+- No seed phrases or private keys to manage
+- Credentials stored securely in device's Secure Enclave
+- Smart wallet (PDA) derived from WebAuthn credential
+
+### 2. Gasless USDC Transfers
+- Send USDC without holding SOL for gas fees
+- Paymaster sponsors transaction fees
+- Small USDC fee deducted instead of SOL
+- Seamless user experience
+
+### Tech Stack
+| Technology | Purpose |
+|------------|---------|
+| [Next.js 16](https://nextjs.org/) | React framework (App Router) |
+| [Lazorkit SDK v2.0.1](https://docs.lazorkit.com/) | Passkey wallet infrastructure |
+| [Solana Web3.js](https://solana-labs.github.io/solana-web3.js/) | Blockchain interaction |
+| [SPL Token](https://spl.solana.com/token) | Token transfers |
+| [Tailwind CSS](https://tailwindcss.com/) | Styling |
+| TypeScript | Type safety |
+
+---
+
+## SDK Installation & Configuration
+
+### Step 1: Install Dependencies
+
+```bash
+npm install @lazorkit/wallet @solana/web3.js @solana/spl-token
+```
+
+### Step 2: Configure the Provider
+
+Create a wrapper component with the Lazorkit provider:
+
+```tsx
+// src/components/LazorkitWrapper.tsx
+"use client";
+
+import { LazorkitProvider } from "@lazorkit/wallet";
+
+const LAZORKIT_CONFIG = {
+  RPC_URL: "https://api.devnet.solana.com",
+  PORTAL_URL: "https://portal.lazor.sh",
+  PAYMASTER: {
+    paymasterUrl: "https://kora.devnet.lazorkit.com",
+  },
+};
+
+export function LazorkitWrapper({ children }: { children: React.ReactNode }) {
+  return (
+    <LazorkitProvider
+      rpcUrl={LAZORKIT_CONFIG.RPC_URL}
+      portalUrl={LAZORKIT_CONFIG.PORTAL_URL}
+      paymaster={LAZORKIT_CONFIG.PAYMASTER}
+    >
+      {children}
+    </LazorkitProvider>
+  );
+}
+```
+
+### Step 3: Wrap Your App
+
+```tsx
+// src/app/layout.tsx
+import { LazorkitWrapper } from "@/components/LazorkitWrapper";
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en">
+      <body>
+        <LazorkitWrapper>{children}</LazorkitWrapper>
+      </body>
+    </html>
+  );
+}
+```
+
+### Step 4: Use the Wallet Hook
+
+```tsx
+// In any component
+import { useWallet } from "@lazorkit/wallet";
+
+function MyComponent() {
+  const {
+    connect,           // Connect with passkey
+    disconnect,        // Disconnect wallet
+    isConnected,       // Connection status
+    wallet,            // Wallet info (smartWallet address)
+    smartWalletPubkey, // PublicKey object
+    signAndSendTransaction // Sign & send transactions
+  } = useWallet();
+
+  return (
+    <button onClick={connect}>
+      {isConnected ? wallet?.smartWallet : "Connect"}
+    </button>
+  );
+}
+```
+
+---
+
+## Environment Setup
 
 ### Prerequisites
 
-- Node.js 18+
-- npm or yarn
-- A WebAuthn-compatible browser (Chrome, Safari, Firefox, Edge)
+| Requirement | Version | Check Command |
+|-------------|---------|---------------|
+| Node.js | 18+ | `node --version` |
+| npm | 9+ | `npm --version` |
+| Git | Any | `git --version` |
 
-### Installation
+### Browser Requirements
+
+WebAuthn (passkeys) requires a compatible browser:
+- Chrome 67+
+- Safari 13+
+- Firefox 60+
+- Edge 79+
+
+### Network Configuration
+
+| Network | RPC URL | Paymaster URL |
+|---------|---------|---------------|
+| **Devnet** (default) | `https://api.devnet.solana.com` | `https://kora.devnet.lazorkit.com` |
+| **Mainnet** | Your RPC provider | `https://kora.mainnet.lazorkit.com` |
+
+---
+
+## Instructions to Run
+
+### Quick Start (3 steps)
 
 ```bash
-# Clone this repository
-git clone https://github.com/YOUR_USERNAME/lazorkit-payment-starter.git
-cd lazorkit-payment-starter
+# 1. Clone the repository
+git clone https://github.com/jasong-03/lazorkit-demo.git
+cd lazorkit-demo
 
-# Install dependencies
+# 2. Install dependencies
 npm install
 
-# Start development server
+# 3. Start development server
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+Open **http://localhost:3000** in your browser.
 
-### Environment Variables (Optional)
+### Running with HTTPS (Required for WebAuthn signing)
 
-Copy `.env.example` to `.env.local` to customize:
+WebAuthn requires HTTPS for transaction signing. Choose one option:
 
+**Option A: Deploy to Vercel (Recommended)**
 ```bash
-cp .env.example .env.local
+npm i -g vercel
+vercel login
+vercel --yes
 ```
 
-Default values point to Devnet - no changes needed for testing.
+**Option B: Local HTTPS with mkcert**
+```bash
+# Install mkcert (macOS)
+brew install mkcert
+mkcert -install
+
+# Run with HTTPS
+npm run dev:https
+```
+
+Then open **https://localhost:3000**
+
+---
+
+## Testing the Demo
+
+### Step 1: Get Test Funds
+
+| Token | Faucet | Amount Needed |
+|-------|--------|---------------|
+| SOL | [faucet.solana.com](https://faucet.solana.com) | ~0.01 SOL (for rent) |
+| USDC | [faucet.circle.com](https://faucet.circle.com) | Any amount |
+
+> **Note:** Select "Solana Devnet" on Circle's faucet.
+
+### Step 2: Connect Wallet
+
+1. Click **"Connect with Passkey"**
+2. First time? Select **"Create new account"** in the popup
+3. Authenticate with your biometric (Face/Touch ID)
+
+### Step 3: Send USDC
+
+1. Enter a recipient Solana address
+2. Enter amount (e.g., `0.1` USDC)
+3. Click **"Send USDC"**
+4. Approve the transaction with your passkey
+5. View on [Solana Explorer](https://explorer.solana.com/?cluster=devnet)
+
+---
 
 ## Project Structure
 
 ```
-lazorkit-payment-starter/
+lazorkit-demo/
 ├── src/
 │   ├── app/
 │   │   ├── layout.tsx          # Root layout with LazorkitProvider
 │   │   ├── page.tsx            # Main demo page
 │   │   └── globals.css         # Global styles
 │   ├── components/
-│   │   ├── ConnectWallet.tsx   # Passkey connect/disconnect
-│   │   ├── WalletInfo.tsx      # Wallet address display
+│   │   ├── ConnectWallet.tsx   # Passkey connect/disconnect button
+│   │   ├── WalletInfo.tsx      # Address display + balances
 │   │   ├── SendUSDC.tsx        # USDC transfer form
-│   │   ├── TxStatus.tsx        # Transaction feedback
-│   │   ├── LazorkitWrapper.tsx # Provider with polyfills
-│   │   └── index.ts            # Component exports
+│   │   ├── TxStatus.tsx        # Transaction status display
+│   │   ├── LazorkitWrapper.tsx # Provider configuration
+│   │   └── index.ts            # Barrel exports
 │   └── lib/
-│       └── constants.ts        # Config and utilities
+│       └── constants.ts        # Config, utilities, addresses
 ├── docs/
-│   ├── 01-passkey-wallet.md    # Tutorial: Passkey Setup
+│   ├── 01-passkey-wallet.md    # Tutorial: Passkey Authentication
 │   └── 02-gasless-usdc.md      # Tutorial: Gasless Transfers
-└── README.md
+├── server.js                   # Custom HTTPS server (local dev)
+└── package.json
 ```
 
-## Tutorials
+---
 
-### [Tutorial 1: Create a Passkey Wallet](./docs/01-passkey-wallet.md)
+## Key Code Examples
 
-Learn how to integrate Lazorkit SDK for passkey-based authentication:
+### Connect Wallet
 
-- Setting up the provider
-- Handling connection states
-- Understanding smart wallets
+```tsx
+const { connect, isConnected } = useWallet();
 
-### [Tutorial 2: Send Gasless USDC](./docs/02-gasless-usdc.md)
-
-Build a gasless USDC transfer feature:
-
-- SPL token transfers
-- Paymaster integration
-- Error handling
-
-## How It Works
-
-### Passkey Authentication
-
-When a user connects:
-
-1. Browser prompts for biometric authentication
-2. WebAuthn credential created in device's Secure Enclave
-3. Lazorkit derives a smart wallet (PDA) from this credential
-4. Private key material never leaves the device
-
-### Gasless Transactions
-
-When sending USDC with `feeToken: "USDC"`:
-
-1. Transaction is routed through Lazorkit's paymaster
-2. Paymaster pays the SOL gas fee
-3. A small USDC fee is deducted from your transfer
-4. You never need to hold SOL!
-
-## Configuration
-
-### Devnet (Default)
-
-```typescript
-const CONFIG = {
-  RPC_URL: "https://api.devnet.solana.com",
-  PORTAL_URL: "https://portal.lazor.sh",
-  PAYMASTER: { paymasterUrl: "https://kora.devnet.lazorkit.com" }
-};
+<button onClick={connect}>
+  {isConnected ? "Connected" : "Connect with Passkey"}
+</button>
 ```
 
-### Mainnet
+### Send Gasless USDC
 
-Update the configuration for production:
+```tsx
+const { signAndSendTransaction, smartWalletPubkey } = useWallet();
 
-```typescript
-const CONFIG = {
-  RPC_URL: "YOUR_MAINNET_RPC_URL",
-  PORTAL_URL: "https://portal.lazor.sh",
-  PAYMASTER: { paymasterUrl: "https://kora.mainnet.lazorkit.com" }
-};
+const signature = await signAndSendTransaction({
+  instructions: [transferInstruction],
+  transactionOptions: {
+    feeToken: "USDC"  // Enables gasless - paymaster pays SOL, deducts USDC
+  }
+});
 ```
 
-## Testing
+### Check Balances
 
-### Get Devnet Funds
+```tsx
+import { Connection, LAMPORTS_PER_SOL } from "@solana/web3.js";
 
-1. Connect your wallet and copy your address
-2. Visit [Solana Faucet](https://faucet.solana.com/) for SOL
-3. Use a USDC faucet for Devnet USDC
+const connection = new Connection("https://api.devnet.solana.com");
+const balance = await connection.getBalance(walletPubkey);
+const solAmount = balance / LAMPORTS_PER_SOL;
+```
 
-### Test the Transfer
-
-1. Enter any valid Solana address as recipient
-2. Enter a small amount (e.g., 0.01 USDC)
-3. Click Send and approve with your passkey
-4. View the transaction on [Solana Explorer](https://explorer.solana.com/?cluster=devnet)
+---
 
 ## Deployment
 
 ### Vercel (Recommended)
 
+1. Push code to GitHub
+2. Go to [vercel.com](https://vercel.com)
+3. Import your repository
+4. Click Deploy
+
+Or via CLI:
 ```bash
-# Install Vercel CLI
-npm i -g vercel
-
-# Deploy
-vercel
+vercel --yes
 ```
-
-Or connect your GitHub repository to [Vercel](https://vercel.com) for automatic deployments.
 
 ### Other Platforms
 
-This is a standard Next.js 14 app. Deploy to any platform that supports Next.js:
-
+Works with any Next.js-compatible host:
 - [Netlify](https://netlify.com)
 - [Railway](https://railway.app)
 - [AWS Amplify](https://aws.amazon.com/amplify/)
 
-## Tech Stack
+---
 
-- **Framework**: [Next.js 14](https://nextjs.org/) (App Router)
-- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
-- **Blockchain**: [Solana](https://solana.com/)
-- **Wallet SDK**: [Lazorkit](https://lazorkit.com/)
-- **Language**: TypeScript
+## Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| "WebAuthn not supported on sites with TLS errors" | Deploy to HTTPS (Vercel) or use `mkcert -install` locally |
+| "Insufficient lamports" error | Get more SOL from faucet (~0.002 SOL needed for new token accounts) |
+| "No passkeys available" | Click "Create new account" in the Lazorkit portal |
+| Transaction fails silently | Check browser console for detailed error logs |
+
+---
 
 ## Resources
 
 - [Lazorkit Documentation](https://docs.lazorkit.com/)
 - [Lazorkit GitHub](https://github.com/lazor-kit/lazor-kit)
-- [Solana Web3.js Docs](https://solana-labs.github.io/solana-web3.js/)
+- [Solana Cookbook](https://solanacookbook.com/)
 - [SPL Token Documentation](https://spl.solana.com/token)
-
-## License
-
-MIT License - feel free to use this starter for your own projects!
 
 ---
 
-Built for the [Lazorkit Bounty](https://docs.lazorkit.com/)
+## License
+
+MIT License - Use freely for your own projects.
+
+---
+
+Built for the [Lazorkit Bounty](https://docs.lazorkit.com/) | [Live Demo](https://lazorkit-demo-drab.vercel.app)

@@ -136,10 +136,27 @@ export function SendUSDC() {
       const instructions = [];
 
       // Check if recipient ATA exists, create if not
+      let needsAtaCreation = false;
       try {
         await getAccount(connection, recipientATA);
       } catch {
-        // Recipient ATA doesn't exist, add instruction to create it
+        needsAtaCreation = true;
+      }
+
+      // If recipient needs ATA creation, check sender has enough SOL for rent
+      if (needsAtaCreation) {
+        const solBalance = await connection.getBalance(smartWalletPubkey);
+        const rentExempt = 2039280; // ~0.002 SOL for token account rent
+
+        if (solBalance < rentExempt) {
+          setTxState({
+            status: "error",
+            error: `Need ~0.002 SOL to create recipient's token account. You have ${(solBalance / 1e9).toFixed(4)} SOL. Get more SOL from faucet.solana.com`
+          });
+          return;
+        }
+
+        // Add instruction to create recipient ATA
         instructions.push(
           createAssociatedTokenAccountInstruction(
             smartWalletPubkey,    // Payer
@@ -188,7 +205,9 @@ export function SendUSDC() {
       let errorMessage = "Transfer failed. Please try again.";
       if (error instanceof Error) {
         // Sanitize error message - don't expose internal details
-        if (error.message.includes("insufficient") || error.message.includes("Insufficient")) {
+        if (error.message.includes("insufficient lamports") || error.message.includes("lamports")) {
+          errorMessage = "Need more SOL to create recipient's token account. Get SOL from faucet.solana.com";
+        } else if (error.message.includes("insufficient") || error.message.includes("Insufficient")) {
           errorMessage = "Insufficient funds for this transaction.";
         } else if (error.message.includes("rejected") || error.message.includes("Rejected")) {
           errorMessage = "Transaction was rejected.";
